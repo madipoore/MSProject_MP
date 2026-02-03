@@ -69,3 +69,17 @@ using βs estimated in the full sample. (p280)
 port_cols = df.columns.drop(['Date', 'RF', 'Mkt-RF'])
 ex_ret = df[port_cols].sub(df['RF'], axis=0)
 mkt_ex = df['Mkt-RF']
+
+betas = {}
+for col in port_cols:
+    # Use np.cov for sample covariance (ddof=1), or statsmodels OLS if you prefer
+    cov_matrix = np.cov(df[col], df['Rm'], ddof=1)
+    cov = cov_matrix[0, 1]
+    var_mkt = cov_matrix[1, 1]
+    betas[col] = cov / var_mkt
+
+orth_raw = df[port_cols].copy()
+for col in port_cols:
+    orth_raw[col] = df[col] - betas[col] * df['Rm']
+
+orth_ex = orth_raw.sub(df['RF'], axis=0)
