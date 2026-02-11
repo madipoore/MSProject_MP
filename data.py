@@ -2,6 +2,7 @@ import pandas as pd
 from datetime import datetime
 import numpy as np
 from scipy import stats
+import sklearn
 
 """
 preparing data for analysis 
@@ -66,38 +67,57 @@ for col in factors.columns[1:]:
 df = df.merge(factors[["Date", "RF", "Mkt-RF","SMB", "HML"]], on="Date", how="inner")
 df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)].reset_index(drop=True)
 #print(df.tail())
-print(df.head())
+#print(df.head())
+
+
 """
-We start with an application of our proposed method to
-daily returns on the 25 Fama-French ME/BM-sorted (FF25)
-portfolios from July 1926 to December2017, which we 
-orthogonalize with respect to the Center for Research
-in Security Prices (CRSP) value-weighted index return 
-using βs estimated in the full sample. (p280)
+In our specification, we focus on under-
+standing the factors that help explain these cross-sectional
+differences, and we do not explicitly include a market fac-
+tor, but we orthogonalize the characteristics-based factors
+with respect to the market factor (p275)
+
+orthogonalize raw returns
 """
 
-#names of 25 portfolios
-port_cols = df.columns.drop(['Date', 'RF', 'Mkt-RF',"SMB", "HML"])
-
-#excess returns for portfolios (returns - RF)
-ex_ret = df[port_cols].sub(df['RF'], axis=0)
-
-#market excess returns
-mkt_ex = df['Mkt-RF']
-
-#defining market return "Mkt" from the "RF" variable and "Mkt-RF"
+#calculating market returns 
 df['Rm'] = df['Mkt-RF'] + df['RF']
 
-#need 25 betas for OLS regression
-def calc_beta(asset_returns, market_returns):
-    """Super simple beta: cov(asset, market) / var(market)"""
-    cov = np.cov(asset_returns, market_returns, ddof=1)[0, 1]
-    var_mkt = np.var(market_returns, ddof=1)
-    return cov / var_mkt if var_mkt != 0 else np.nan
+#orthogonalizing returns
+port_cols = [col for col in df.columns 
+             if col not in ['Date', 'RF', 'Mkt-RF', 'SMB', 'HML', 'Rm']]
+orth_raw = df[port_cols].copy()
+#initializes betas object
+betas = pd.Series(index=port_cols, dtype=float)
+for col in port_cols:
+    #OLS regression fit 
+    slope, _, _, _, _ = stats.linregress(df['Rm'], df[col])
+    betas[col] = slope
+#print(betas.head())
+for col in port_cols:
+    orth_raw[col] = df[col] - betas[col] * df['Rm']
 
-#OLS regression
-def simple_beta(portfolio, market):
-    slope, intercept, r_value, p_value, std_err = stats.linregress(market, portfolio)
-    return slope  # this is your beta
-betas = df[port_cols].apply(lambda col: simple_beta(col, df['Rm']))
-print(betas.round(4))
+#tests for orthogonality... should be really small cov vals 
+# for col in port_cols[:5]:
+#     cov = np.cov(orth_raw[col], df['Rm'], ddof=1)[0, 1]
+#     print(f"{col:12} cov = {cov:.2e}")
+
+#rescaling to std(Mkt-RF)
+market_ex_std = df['Mkt-RF'].std(ddof=1)
+orth_scaled_raw = orth_raw.multiply(
+    market_ex_std / orth_raw.std(ddof=1),
+    axis=1
+)
+print("Std dev after rescaling:")
+print(orth_scaled_raw.iloc[:, :5].std(ddof=1))
+orth_ex_scaled = orth_scaled_raw.subtract(df['RF'], axis=0)
+
+
+full_df = pd.concat([
+    df[['Date', 'RF', 'Mkt-RF', 'SMB', 'HML', 'Rm']],  # keep original factors + dates
+    orth_ex_scaled                                      # add the 25 processed columns
+], axis=1)
+
+
+#export to pk1 file: 
+#full_df.to_pickle("/Users/madisonpoore/Desktop/ff25_orth_ex_scaled.pkl")
