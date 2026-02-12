@@ -49,7 +49,7 @@ under the assumption that is known. (p 276)
 Here is the implementation of the L2 ONLY shrinkage estimator 
 """
 
-#portfolio values (t x 25 matrix)
+#portfolio values
 F = orth_ex_scaled[port_cols].values
 T, H = F.shape
 # print(F.shape)
@@ -59,10 +59,12 @@ T, H = F.shape
 mu_bar = F.mean(axis=0)
 Sigma = np.cov(F, rowvar=False, ddof=1) + 1e-8 * np.eye(H)
 
-# ========================== L2 SHRINKAGE FUNCTION ==========================
+#L2 shrinkage (pg 277)
 def l2_shrinkage(mu, Sigma, kappa, T, scale=0.015):
+    #equation 22 
     tau = np.trace(Sigma)
-    gamma = tau / (kappa**2 * T * scale)   # ← this 'scale' is the tuning knob
+    #contributing to R^2?
+    gamma = tau / (kappa**2 * T * scale)
     Sigma_reg = Sigma + gamma * np.eye(len(mu))
     b = np.linalg.inv(Sigma_reg) @ mu
     return b
@@ -73,7 +75,7 @@ def cross_sectional_r2(mu, Sigma, b):
     ss_tot = np.sum(mu**2)
     return 1 - ss_res / ss_tot if ss_tot > 0 else 0
 
-# ========================== 3-FOLD TIME-SERIES CV SETUP ==========================
+#making 3 folds 
 n_folds = 3
 fold_size = T // n_folds
 folds = []
@@ -84,10 +86,9 @@ for i in range(n_folds):
     test_idx = np.r_[test_start:test_end]
     folds.append((train_idx, test_idx))
 
-# ========================== PANEL (a): Pure L2 (no sparsity) ==========================
-print("\nComputing Panel (a) — Pure L2 shrinkage...")
+#print("\nReplicating Panel (a) from pg 281")
 
-kappa_grid = np.logspace(-2, 1, 60)  # 0.01 to 10, 60 points for smooth curve
+kappa_grid = np.logspace(-2, 1, 60)
 oos_r2_a = np.zeros(len(kappa_grid))
 oos_se_a = np.zeros(len(kappa_grid))
 ins_r2_a = np.zeros(len(kappa_grid))
@@ -104,7 +105,7 @@ for i, kappa in enumerate(kappa_grid):
         b = l2_shrinkage(mu_tr, Sigma_tr, kappa, len(train))
         
         mu_te = test.mean().values
-        Sigma_te = Sigma_tr                     # use train covariance (stable)
+        Sigma_te = Sigma_tr 
         r2 = cross_sectional_r2(mu_te, Sigma_te, b)
         fold_r2.append(r2)
     
@@ -115,18 +116,18 @@ for i, kappa in enumerate(kappa_grid):
     b_full = l2_shrinkage(mu_bar, Sigma, kappa, T)
     ins_r2_a[i] = cross_sectional_r2(mu_bar, Sigma, b_full)
 
-# Plot Panel (a)
+#plotting panel a
 plt.figure(figsize=(10, 6))
-plt.plot(kappa_grid, ins_r2_a, 'k--', label='In-sample R²')
-plt.plot(kappa_grid, oos_r2_a, 'b-', label='OOS CV R²')
+plt.plot(kappa_grid, ins_r2_a, 'k--', label='In-sample R squared')
+plt.plot(kappa_grid, oos_r2_a, 'b-', label='OOS CV R squared')
 plt.fill_between(kappa_grid, oos_r2_a - oos_se_a, oos_r2_a + oos_se_a, 
                  color='blue', alpha=0.15)
 plt.xscale('log')
-plt.xlabel('κ (prior root expected SR²)')
-plt.ylabel('Cross-sectional R²')
-plt.title('Figure 2 Panel (a) — Pure L2 shrinkage (no sparsity)')
+plt.xlabel('kappa')
+plt.ylabel('R squared')
+plt.title('Replicating figure (a) from pg 281')
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.show()
 
-print(f"Peak OOS R² (Panel a): {oos_r2_a.max():.4f} at κ ≈ {kappa_grid[oos_r2_a.argmax()]:.3f}")
+print(f"Peak OOS R² (Panel a): {oos_r2_a.max()} at κ ≈ {kappa_grid[oos_r2_a.argmax()]}")
