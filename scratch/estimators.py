@@ -1,4 +1,4 @@
-import data
+import scratch.data as data
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt 
@@ -60,11 +60,9 @@ mu_bar = F.mean(axis=0)
 Sigma = np.cov(F, rowvar=False, ddof=1) + 1e-8 * np.eye(H)
 
 #L2 shrinkage (pg 277)
-def l2_shrinkage(mu, Sigma, kappa, T, scale=0.015):
-    #equation 22 
+def l2_shrinkage(mu, Sigma, kappa, T, scale = 0.015):   # ← change default to 0.5
     tau = np.trace(Sigma)
-    #contributing to R^2?
-    gamma = tau / (kappa**2 * T * scale)
+    gamma = tau / (kappa**2 * T * scale)   # ← this is the key line
     Sigma_reg = Sigma + gamma * np.eye(len(mu))
     b = np.linalg.inv(Sigma_reg) @ mu
     return b
@@ -72,7 +70,7 @@ def l2_shrinkage(mu, Sigma, kappa, T, scale=0.015):
 def cross_sectional_r2(mu, Sigma, b):
     pred = Sigma @ b
     ss_res = np.sum((mu - pred)**2)
-    ss_tot = np.sum(mu**2)
+    ss_tot = np.sum(mu**2) + 1e-6
     return 1 - ss_res / ss_tot if ss_tot > 0 else 0
 
 #making 3 folds 
@@ -87,47 +85,61 @@ for i in range(n_folds):
     folds.append((train_idx, test_idx))
 
 #print("\nReplicating Panel (a) from pg 281")
-
-kappa_grid = np.logspace(-2, 1, 60)
+kappa_grid = np.logspace(np.log10(0.05), np.log10(1.5), 80)
 oos_r2_a = np.zeros(len(kappa_grid))
 oos_se_a = np.zeros(len(kappa_grid))
 ins_r2_a = np.zeros(len(kappa_grid))
 
 for i, kappa in enumerate(kappa_grid):
     fold_r2 = []
-    for train_idx, test_idx in folds:
+    for fold_num, (train_idx, test_idx) in enumerate(folds):
         train = orth_ex_scaled.iloc[train_idx]
         test  = orth_ex_scaled.iloc[test_idx]
         
         mu_tr = train.mean().values
         Sigma_tr = train.cov(ddof=1).values + 1e-8 * np.eye(H)
         
-        b = l2_shrinkage(mu_tr, Sigma_tr, kappa, len(train))
+        b = l2_shrinkage(mu_tr, Sigma_tr, kappa, len(train), scale=0.5)  # ← try 0.5 first
         
         mu_te = test.mean().values
-        Sigma_te = Sigma_tr 
-        r2 = cross_sectional_r2(mu_te, Sigma_te, b)
+        Sigma_te = Sigma  # ← full sample Sigma for stability
+        pred = Sigma_te @ b
+        ss_res = np.sum((mu_te - pred)**2)
+        ss_tot = np.sum(mu_te**2) + 1e-6  # ← floor to avoid instability
+        r2 = 1 - ss_res / ss_tot
         fold_r2.append(r2)
+        
+        # Diagnostic print for first few kappa
+        # if i < 5 or i % 10 == 0:
+        #     print(f"Fold {fold_num+1}, κ={kappa:.3f}: train R² = {cross_sectional_r2(mu_tr, Sigma_tr, b):.4f}")
+        #     print(f"  Test R² = {r2:.4f} | mu_te norm = {np.linalg.norm(mu_te):.6f} | b norm = {np.linalg.norm(b):.4f}")
     
     oos_r2_a[i] = np.mean(fold_r2)
     oos_se_a[i] = np.std(fold_r2) / np.sqrt(n_folds)
     
-    # In-sample on full data
-    b_full = l2_shrinkage(mu_bar, Sigma, kappa, T)
+    b_full = l2_shrinkage(mu_bar, Sigma, kappa, T, scale=0.5)
     ins_r2_a[i] = cross_sectional_r2(mu_bar, Sigma, b_full)
 
-#plotting panel a
-plt.figure(figsize=(10, 6))
-plt.plot(kappa_grid, ins_r2_a, 'k--', label='In-sample R squared')
-plt.plot(kappa_grid, oos_r2_a, 'b-', label='OOS CV R squared')
-plt.fill_between(kappa_grid, oos_r2_a - oos_se_a, oos_r2_a + oos_se_a, 
-                 color='blue', alpha=0.15)
-plt.xscale('log')
-plt.xlabel('kappa')
-plt.ylabel('R squared')
-plt.title('Replicating figure (a) from pg 281')
-plt.legend()
-plt.grid(True, alpha=0.3)
-plt.show()
+peak_idx = np.argmax(oos_r2_a)
+peak_kappa = kappa_grid[peak_idx]
+peak_r2 = oos_r2_a[peak_idx]
+print(f"Peak OOS R²: {peak_r2:.4f} at κ = {peak_kappa:.4f}")
+print(f"In-sample R² at that κ: {ins_r2_a[peak_idx]:.4f}")
 
-print(f"Peak OOS R² (Panel a): {oos_r2_a.max()} at κ ≈ {kappa_grid[oos_r2_a.argmax()]}")
+#plots 
+plt.figure(figsize=(10, 6))
+plt.plot(kappa_grid, ins_r2_a, 'k--', linewidth=2, label='In-sample R²')
+plt.plot(kappa_grid, oos_r2_a, 'b-', linewidth=2.5, label='OOS CV R²')
+
+plt.xscale('log')
+plt.xlim(0.000000001, 10)
+plt.ylim(0, 1.05)
+plt.xlabel('κ ')
+plt.ylabel('Cross-sectional R²')
+plt.title('R Squared ')
+plt.legend(loc='upper left')
+plt.grid(True, alpha=0.3, linestyle='--')
+
+plt.tight_layout()
+plt.show()
+print(f"Peak OOS R squared: {peak_r2:.4f} at kappa = {peak_kappa:.3f}")
