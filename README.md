@@ -1,6 +1,6 @@
 # MSProject_MP
 
-Personal research project focused on asset pricing, factor models, and replication of "Shrinking the Cross-Section" (Kozak, Nagel, Santosh, 2020).
+"Shrinking the Cross-Section" (Kozak, Nagel, Santosh, 2020).
 
 ## File Structure
 MSProject_MP/
