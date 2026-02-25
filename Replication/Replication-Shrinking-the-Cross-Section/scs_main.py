@@ -119,4 +119,3 @@ else:
         # estimate
         p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
 
-    

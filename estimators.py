@@ -1,4 +1,4 @@
-import scratch.data as data
+import data
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt 
@@ -60,9 +60,9 @@ mu_bar = F.mean(axis=0)
 Sigma = np.cov(F, rowvar=False, ddof=1) + 1e-8 * np.eye(H)
 
 #L2 shrinkage (pg 277)
-def l2_shrinkage(mu, Sigma, kappa, T, scale = 0.015):   # ← change default to 0.5
+def l2_shrinkage(mu, Sigma, kappa, T, scale = 0.015): 
     tau = np.trace(Sigma)
-    gamma = tau / (kappa**2 * T * scale)   # ← this is the key line
+    gamma = tau / (kappa**2 * T * scale)
     Sigma_reg = Sigma + gamma * np.eye(len(mu))
     b = np.linalg.inv(Sigma_reg) @ mu
     return b
@@ -109,11 +109,7 @@ for i, kappa in enumerate(kappa_grid):
         r2 = 1 - ss_res / ss_tot
         fold_r2.append(r2)
         
-        # Diagnostic print for first few kappa
-        # if i < 5 or i % 10 == 0:
-        #     print(f"Fold {fold_num+1}, κ={kappa:.3f}: train R² = {cross_sectional_r2(mu_tr, Sigma_tr, b):.4f}")
-        #     print(f"  Test R² = {r2:.4f} | mu_te norm = {np.linalg.norm(mu_te):.6f} | b norm = {np.linalg.norm(b):.4f}")
-    
+        
     oos_r2_a[i] = np.mean(fold_r2)
     oos_se_a[i] = np.std(fold_r2) / np.sqrt(n_folds)
     
