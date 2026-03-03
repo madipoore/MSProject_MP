@@ -46,8 +46,8 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
         'demarket_unconditionally': True,
         'devol_conditionally': False,
         'devol_unconditionally': True,
-        'plot_dof': True,
-        'plot_coefpaths': True,
+        'plot_dof': False,
+        'plot_coefpaths': False,
         'plot_objective': True,
         'line_width': 1.5,
         'font_size': 10,
@@ -56,7 +56,7 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
         'L1_log_scale': True,
         'L2_log_scale': True,
         'legend_loc': 'best',
-        'results_export': True,
+        'results_export': False,
         'show_plot': True
     }
 
@@ -459,6 +459,9 @@ def plot_L2cv(x, objL2, p):
     plt.grid(True)
     plt.ylim([0, max(0.1, min(10, 2*max(objL2[:, 1])))])
     plt.xlim([min(x), 2])
+
+    # plt.ylim(0,1)
+    # plt.xlim(0.01,10)
     
     # Show plot
     if p['show_plot']:

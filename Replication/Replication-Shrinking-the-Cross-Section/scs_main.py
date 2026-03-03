@@ -6,15 +6,16 @@ from load_managed_portfolios import load_managed_portfolios
 from SCS_L2est import SCS_L2est
 
 # Options
-daily = False
+daily = True
 interactions = False
 rotate_PC = False
 withhold_test_sample = False
 dataprovider = 'ff25'
 
 # Sample dates
-t0 = datetime.strptime('01-Jul-1963', '%d-%b-%Y')
-tN = datetime.strptime('31-Dec-2017', '%d-%b-%Y')
+t0 = datetime(1926, 7, 1)
+tN = datetime(2017, 12, 31)
+
 oos_test_date = datetime.strptime('01JAN2005', '%d%b%Y')
 
 # Current run folder
@@ -52,9 +53,6 @@ default_params = {
     'fig_options': {'fig_sizes': ['width=half'], 'close_after_print': True}
 }
 
-# Load FF factors (assuming function has been translated)
-# dd, re, _ = load_ff_anomalies(datapath, daily, t0, tN)
-
 # Parameters setup
 p = default_params
 
@@ -91,7 +89,7 @@ if dataprovider == 'ff25':
     if withhold_test_sample:
         p['oos_test_date'] = oos_test_date
 
-    # print("Starting estimation...")   # ← add this
+    # print("Starting estimation...")
     p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
     # print("Estimation finished.")
     if not interactions:
