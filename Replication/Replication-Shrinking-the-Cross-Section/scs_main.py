@@ -4,13 +4,17 @@ from datetime import datetime
 import os
 from load_managed_portfolios import load_managed_portfolios
 from SCS_L2est import SCS_L2est
+import load_emerging
 
 # Options
+#dataprovider = 'ff25'
 daily = True
 interactions = False
 rotate_PC = False
 withhold_test_sample = False
-dataprovider = 'ff25'
+
+#dataprovider = 'anom_50'
+dataprovider = 'emerging_mkt'
 
 # Sample dates
 t0 = datetime(1926, 7, 1)
@@ -24,7 +28,7 @@ run_folder = datetime.today().strftime('%d%b%Y').upper() + "/"
 # Paths
 projpath = ''
 datapath = os.path.join(projpath, 'Data')
-instrpath = os.path.join(datapath, 'instruments')
+instrpath = os.path.join(datapath, 'Instruments')
 
 # Initialize
 if daily:
@@ -36,7 +40,6 @@ else:
     suffix = ''
     date_fmt = '%m/%Y'
 
-# Set random seed (equivalent of MATLAB's rng default)
 np.random.seed(0)
 
 # Default estimation parameters
@@ -97,11 +100,41 @@ if dataprovider == 'ff25':
         # Assuming functions have been translated
         # dd, re, mkt, DATA, labels = load_ff25(datapath, daily, 0, tN)
         # Followed by processing and estimation logic as in MATLAB
+
+elif dataprovider == 'emerging_mkt':
+    print("=== ENTERED EMERGING MARKETS BLOCK ===")
+    
+    datapath = os.path.join(projpath, 'Data') + '/'
+    print(f"Loading from: {datapath}")
+    
+    # Local dates for emerging (starts 1990, extend to future)
+    emerging_t0 = datetime(1990, 1, 1)
+    emerging_tN = datetime(2025, 12, 31)  # or datetime.now()
+    
+    dd, re, mkt, DATA, labels = load_emerging.load_emerging_mkt(
+        datapath=datapath,
+        daily=daily,
+        t0=emerging_t0,   # ← use local
+        tN=emerging_tN    # ← use local
+    )
+    
+    anomalies = labels
+    
+    freq = 12
+    
+    print(f"Passing to SCS_L2est: {len(anomalies)} portfolios, {len(dd)} dates")
+    p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
+    print("Estimation finished.")
+
+
+
 else:
     # Managed portfolios
     fmask = os.path.join(instrpath, f"managed_portfolios_{dataprovider}{suffix}_*.csv")
-    # Instead of ls in MATLAB, we can list files in directory using os
-    flist = [f for f in os.listdir(instrpath) if f.startswith(f"managed_portfolios_{dataprovider}{suffix}")]
+
+    flist = os.listdir(instrpath)
+    print("flist:", flist)
+    print("list dir:", os.listdir(instrpath))
     filename = os.path.join(instrpath, flist[0].strip())
     # Followed by data loading and estimation as in MATLAB
 

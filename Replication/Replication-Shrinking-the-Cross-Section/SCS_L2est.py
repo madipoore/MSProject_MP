@@ -46,8 +46,8 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
         'demarket_unconditionally': True,
         'devol_conditionally': False,
         'devol_unconditionally': True,
-        'plot_dof': False,
-        'plot_coefpaths': False,
+        'plot_dof': True,
+        'plot_coefpaths': True,
         'plot_objective': True,
         'line_width': 1.5,
         'font_size': 10,
@@ -348,7 +348,7 @@ def plot_dof(df, x, p):
     
     # Setting x-axis limits
     plt.xlim([min(x), max(x)])
-    
+    plt.tight_layout()
     # Show plot
     if p['show_plot']:
         plt.show()
@@ -396,6 +396,7 @@ def plot_L2coefpaths(x, phi, iL2opt, anomalies, ylbl, p):
         plt.xticks([tick + 1e-16 for tick in plt.xticks()[0]])
     
     # Labels and grid
+
     plt.xlabel(p['xlbl'], fontsize=12, labelpad=10, fontweight='bold')
     plt.ylabel(ylbl, fontsize=12, labelpad=10, fontweight='bold')
     plt.grid(True)
@@ -409,7 +410,7 @@ def plot_L2coefpaths(x, phi, iL2opt, anomalies, ylbl, p):
     
     # x-axis limits
     plt.xlim([min(x), max(x)])
-    
+    plt.tight_layout()
     # Show plot
     if p['show_plot']:
         plt.show()
@@ -460,6 +461,7 @@ def plot_L2cv(x, objL2, p):
     plt.ylim([0, max(0.1, min(10, 2*max(objL2[:, 1])))])
     plt.xlim([min(x), 2])
 
+    plt.tight_layout()
     # plt.ylim(0,1)
     # plt.xlim(0.01,10)
     
