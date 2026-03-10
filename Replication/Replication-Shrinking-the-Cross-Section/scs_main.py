@@ -7,30 +7,31 @@ from SCS_L2est import SCS_L2est
 import load_emerging
 
 # Options
-#dataprovider = 'ff25'
+
 daily = True
 interactions = False
 rotate_PC = False
 withhold_test_sample = False
-
+#dataprovider = 'ff25'
 #dataprovider = 'anom_50'
-dataprovider = 'emerging_mkt'
+#dataprovider = 'emerging_mkt'
+dataprovider = 'developed_mkt_exus'
 
-# Sample dates
+#use these dates for ff25 and anom50
+#emerging and developed markets set dates in their specific blocks
+
 t0 = datetime(1926, 7, 1)
 tN = datetime(2017, 12, 31)
 
 oos_test_date = datetime.strptime('01JAN2005', '%d%b%Y')
 
-# Current run folder
 run_folder = datetime.today().strftime('%d%b%Y').upper() + "/"
 
-# Paths
 projpath = ''
 datapath = os.path.join(projpath, 'Data')
 instrpath = os.path.join(datapath, 'Instruments')
 
-# Initialize
+#daily scaling
 if daily:
     freq = 252
     suffix = '_d'
@@ -107,26 +108,49 @@ elif dataprovider == 'emerging_mkt':
     datapath = os.path.join(projpath, 'Data') + '/'
     print(f"Loading from: {datapath}")
     
-    # Local dates for emerging (starts 1990, extend to future)
     emerging_t0 = datetime(1990, 1, 1)
-    emerging_tN = datetime(2025, 12, 31)  # or datetime.now()
+    emerging_tN = datetime(2025, 12, 31)
     
     dd, re, mkt, DATA, labels = load_emerging.load_emerging_mkt(
         datapath=datapath,
         daily=daily,
-        t0=emerging_t0,   # ← use local
-        tN=emerging_tN    # ← use local
+        t0=emerging_t0,
+        tN=emerging_tN
     )
     
     anomalies = labels
     
+    #assuming monthly data, would need to enter different data for daily observations 
     freq = 12
     
     print(f"Passing to SCS_L2est: {len(anomalies)} portfolios, {len(dd)} dates")
     p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
     print("Estimation finished.")
 
+elif dataprovider == 'developed_mkt_exus':
+    print("=== ENTERED DEVELOPED MKTS EX US BLOCK ===")
 
+    datapath = os.path.join(projpath, 'Data') + '/'
+    print(f"Loading from: {datapath}")
+    
+    emerging_t0 = datetime(1990, 1, 1)
+    emerging_tN = datetime(2025, 12, 31)
+    
+    dd, re, mkt, DATA, labels = load_emerging.load_developed_exus(
+        datapath=datapath,
+        daily=daily,
+        t0=emerging_t0,
+        tN=emerging_tN
+    )
+    
+    anomalies = labels
+    
+    #assuming monthly data, would need to enter different data for daily observations 
+    freq = 12
+    
+    print(f"Passing to SCS_L2est: {len(anomalies)} portfolios, {len(dd)} dates")
+    p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
+    print("Estimation finished.")
 
 else:
     # Managed portfolios
