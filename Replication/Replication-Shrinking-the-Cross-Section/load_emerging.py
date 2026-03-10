@@ -27,23 +27,19 @@ def load_emerging_mkt(datapath, daily, t0=None, tN=None):
 
     if t0 is not None and tN is not None:
         DATA = DATA[(DATA['Date'] >= t0) & (DATA['Date'] <= tN)]
-
-    # Portfolio columns — hard-code them to avoid detection issues
+        
     portfolio_cols = [
         'SMALL LoPRIOR', 'ME1 PRIOR2', 'SMALL HiPRIOR',
         'BIG LoPRIOR', 'ME2 PRIOR2', 'BIG HiPRIOR'
     ]
 
-    # Force convert to numeric (this is the key fix)
     for col in portfolio_cols:
         DATA[col] = pd.to_numeric(DATA[col], errors='coerce') / 100  # percent to decimal
-
-    # Drop rows with any NaN in returns
     DATA = DATA.dropna(subset=portfolio_cols)
 
     dates = DATA['Date']
     ret = DATA[portfolio_cols]
-    mkt = ret.mean(axis=1)  # average across portfolios
+    mkt = ret.mean(axis=1)
 
     labels = portfolio_cols
 
@@ -64,7 +60,7 @@ def load_developed_exus(datapath, daily, t0=None, tN=None):
         tN = datetime.max
     #/Users/madisonpoore/Desktop/MSProject/Replication/Replication-Shrinking-the-Cross-Section/Data/Developed_ex_US_6_Portfolios_ME_Prior_12_2.csv
     ff25 = 'Developed_ex_US_6_Portfolios_ME_Prior_12_2.csv'
-    date_fmt = '%Y%m'  # YYYYMM
+    date_fmt = '%Y%m'
 
     DATA = pd.read_csv(
         datapath + ff25,
@@ -80,22 +76,19 @@ def load_developed_exus(datapath, daily, t0=None, tN=None):
     if t0 is not None and tN is not None:
         DATA = DATA[(DATA['Date'] >= t0) & (DATA['Date'] <= tN)]
 
-    # Portfolio columns — hard-code them to avoid detection issues
     portfolio_cols = [
         'SMALL LoPRIOR', 'ME1 PRIOR2', 'SMALL HiPRIOR',
         'BIG LoPRIOR', 'ME2 PRIOR2', 'BIG HiPRIOR'
     ]
 
-    # Force convert to numeric (this is the key fix)
     for col in portfolio_cols:
-        DATA[col] = pd.to_numeric(DATA[col], errors='coerce') / 100  # percent to decimal
+        DATA[col] = pd.to_numeric(DATA[col], errors='coerce') / 100
 
-    # Drop rows with any NaN in returns
     DATA = DATA.dropna(subset=portfolio_cols)
 
     dates = DATA['Date']
     ret = DATA[portfolio_cols]
-    mkt = ret.mean(axis=1)  # average across portfolios
+    mkt = ret.mean(axis=1)
 
     labels = portfolio_cols
 
