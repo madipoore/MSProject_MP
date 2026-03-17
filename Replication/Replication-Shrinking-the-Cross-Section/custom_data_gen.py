@@ -1,20 +1,17 @@
 import numpy as np
 import pandas as pd
 
-# 1. Load QQQ data
 df = pd.read_csv("/Users/madisonpoore/Desktop/MSProject/Replication/Replication-Shrinking-the-Cross-Section/Data/qqq_monthly_dataset.csv")
 
 df['month_end'] = pd.to_datetime(df['month_end'])
 df['month_end'] = df['month_end'] + pd.offsets.MonthEnd(0)
 
-# Crop to Dec 2017
 end_date = pd.to_datetime('2017-12-31')
 df = df[df['month_end'] <= end_date]
 print(f"Cropped to {df['month_end'].min().date()} -- {df['month_end'].max().date()} ({len(df)} rows)")
 
 df = df.sort_values(['symbol', 'month_end']).reset_index(drop=True)
 
-# 2. Keep needed columns
 required_cols = [
     'symbol', 'month_end',
     'monthly_return', 'close', 'volume',
@@ -31,7 +28,6 @@ df_slim = df[keep_cols].copy()
 print("Columns kept:", df_slim.columns.tolist())
 print("Shape after column selection:", df_slim.shape)
 
-# 3. Basic filters
 df_clean = df_slim[
     (df_slim['close'] > 1) &
     (df_slim['key_metrics_marketCap'] > 0) &
@@ -44,19 +40,17 @@ df_clean = df_clean.dropna(subset=['key_metrics_marketCap', 'monthly_return'])
 
 print("Shape after basic filters:", df_clean.shape)
 
-# Lagged market cap
 df_clean['mktcap_lag'] = df_clean.groupby('symbol')['key_metrics_marketCap'].shift(1)
 df_clean = df_clean.dropna(subset=['mktcap_lag'])
 
 print("Shape after mktcap_lag dropna:", df_clean.shape)
 
-# 4. Load RF (handle slash dates and extra columns)
 rf_path = '/Users/madisonpoore/Desktop/MSProject/Replication/Replication-Shrinking-the-Cross-Section/Data/F-F_Research_Data_Factors.csv'
 rf_df = pd.read_csv(rf_path, skiprows=3, header=None)
 
 print("\nRaw RF head (first 10 rows):\n", rf_df.head(10).to_string(index=False))
 
-rf_df = rf_df.iloc[:, :5]  # take first 5 columns
+rf_df = rf_df.iloc[:, :5]
 rf_df.columns = ['date_raw', 'mkt_rf', 'smb', 'hml', 'rf']
 
 rf_df['date_raw'] = pd.to_datetime(rf_df['date_raw'], format='%Y/%m/%d', errors='coerce')
@@ -79,7 +73,6 @@ df_clean = df_clean.dropna(subset=['ret_exc'])
 
 print("Shape after RF merge and ret_exc dropna:", df_clean.shape)
 
-# 5. Forward-fill & compute predictors
 ffill_cols = ['balance_totalStockholdersEquity', 'ratios_grossProfitMargin',
               'growth_assetGrowth', 'growth_revenueGrowth', 'key_metrics_evToEBITDA']
 
@@ -120,13 +113,8 @@ predictor_cols = ['size', 'bm_lag', 'mom12m', 'profit_lag', 'asset_growth_lag',
                   'sales_growth_lag', 'ev_ebitda_lag']
 
 df_predictors = df_clean.dropna(subset=predictor_cols + ['ret_exc', 'mktcap_lag'])
-
-print("\nShape after predictors:", df_predictors.shape)
-print("Missing in predictors:\n", df_predictors[predictor_cols].isna().sum())
-
-# Save
 final_cols = ['month_end', 'symbol', 'ret_exc', 'mktcap_lag'] + predictor_cols
 df_final = df_predictors[final_cols].copy()
-df_final.to_csv('qqq_long_panel_clean.csv', index=False)
-print("Saved to qqq_long_panel_clean.csv")
-print("\nHead of final:\n", df_final.head())
+# df_final.to_csv('qqq_long_panel_clean.csv', index=False)
+# print("Saved to qqq_long_panel_clean.csv")
+# print("\nHead of final:\n", df_final.head())
