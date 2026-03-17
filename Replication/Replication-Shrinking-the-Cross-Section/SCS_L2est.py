@@ -509,3 +509,177 @@ def table_L2coefs(phi, se, anomalies, p):
     # export as a latex formatted table
     if p['results_export']:
         df.to_latex('results_export/coefficients_table.tex', index=False)
+
+
+
+def extra_plot(dd, re, mkt, labels, daily=True):
+    """
+    Plots cumulative excess returns of all 25 FF25 portfolios.
+    
+    Parameters:
+    - dd: dates (list, Series, or array)
+    - re: pd.DataFrame of excess returns (rows=time, columns=25 portfolios)
+    - mkt: pd.Series of market excess returns (optional, not used here)
+    - labels: list of 25 portfolio names
+    - daily: bool (not used for scaling here, but kept for compatibility)
+    """
+    # Ensure datetime index
+    if not isinstance(re.index, pd.DatetimeIndex):
+        re.index = pd.to_datetime(dd)
+
+    # Sort just in case
+    re = re.sort_index()
+
+    # Compute cumulative returns (starting from 1, then subtract 1 for excess return level)
+    cum_ret = (1 + re).cumprod() - 1
+    cum_ret_pct = cum_ret * 100  # to percent scale
+
+    # ─── Main plot: All 25 portfolios ───
+    plt.figure(figsize=(14, 8))
+
+    # Plot each portfolio
+    for i, col in enumerate(re.columns):
+        label = labels[i] if i < len(labels) else col
+        plt.plot(cum_ret_pct.index, cum_ret_pct[col], 
+                 label=label, linewidth=1.0, alpha=0.7)
+
+    plt.title('Cumulative Excess Returns – All 25 Fama-French Portfolios\n(July 1926 – December 2017)')
+    plt.ylabel('Cumulative Excess Return (%)')
+    plt.xlabel('Date')
+    plt.grid(True, alpha=0.3, linestyle='--')
+
+    # Legend outside the plot (since 25 labels are too many for inside)
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', 
+               fontsize=8, ncol=2, frameon=True, edgecolor='gray')
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_50anom(dd, re, labels):
+    """
+    Simple Matplotlib plot: cumulative excess returns of 50 anomaly portfolios.
+    
+    Parameters:
+    - dd: dates (list, Series, or array)
+    - re: pd.DataFrame of excess returns (rows = time, columns = 50 portfolios)
+    - labels: list of 50 portfolio/anomaly names
+    """
+    # Ensure datetime index
+    if not isinstance(re.index, pd.DatetimeIndex):
+        re.index = pd.to_datetime(dd)
+
+    # Sort just in case
+    re = re.sort_index()
+
+    # Cumulative excess returns (start at 1, subtract 1 for excess level)
+    cum_ret = (1 + re).cumprod() - 1
+    cum_ret_pct = cum_ret * 100  # scale to percent for readability
+
+    # Create the figure
+    plt.figure(figsize=(12, 7))
+
+    # Plot all 50 lines (light colors, thin lines to reduce clutter)
+    for i, col in enumerate(re.columns):
+        label = labels[i] if i < len(labels) else col
+        plt.plot(cum_ret_pct.index, cum_ret_pct[col],
+                 label=label, linewidth=0.8, alpha=0.6)
+
+    # Title and labels
+    plt.title('Cumulative Excess Returns – 50 Anomaly Portfolios\n(1963–2017)', fontsize=14)
+    plt.ylabel('Cumulative Excess Return (%)', fontsize=12)
+    plt.xlabel('Date', fontsize=12)
+
+    # Grid and legend (outside, small font, 2 columns)
+    plt.grid(True, alpha=0.3, linestyle='--')
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left',
+               fontsize=8, ncol=2, frameon=True, edgecolor='gray')
+
+    # Tight layout so legend doesn't overlap
+    plt.tight_layout()
+
+    # Show the plot (pops up window)
+    plt.show()
+
+
+def plot_emg(dd, re_emerging, labels_emerging, title="Cumulative Excess Returns – Emerging Markets Portfolios"):
+    """
+    Simple line plot: cumulative excess returns for emerging markets portfolios only.
+    
+    Parameters:
+    - dd: dates (list/Series/array)
+    - re_emerging: pd.DataFrame of excess returns (rows=time, columns=portfolios)
+    - labels_emerging: list of portfolio names
+    - title: optional custom title
+    """
+    # Ensure datetime index
+    if not isinstance(re_emerging.index, pd.DatetimeIndex):
+        re_emerging.index = pd.to_datetime(dd)
+
+    re_emerging = re_emerging.sort_index()
+
+    # Cumulative excess returns
+    cum_em = (1 + re_emerging).cumprod() - 1
+    cum_em_pct = cum_em * 100  # to percent
+
+    plt.figure(figsize=(12, 7))
+
+    # Plot each emerging portfolio
+    for i, col in enumerate(re_emerging.columns):
+        label = labels_emerging[i] if i < len(labels_emerging) else col
+        plt.plot(cum_em_pct.index, cum_em_pct[col],
+                 label=label, linewidth=1.0, alpha=0.7)
+
+    plt.title(title)
+    plt.ylabel('Cumulative Excess Return (%)')
+    plt.xlabel('Date')
+    plt.grid(True, alpha=0.3, linestyle='--')
+
+    # Legend outside to avoid clutter
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left',
+               fontsize=9, ncol=2, frameon=True, edgecolor='gray')
+
+    plt.tight_layout()
+    plt.show()
+
+
+
+def plot_dev(dd, re_developed, labels_developed, title="Cumulative Excess Returns – Developed ex-US Portfolios"):
+    """
+    Simple line plot: cumulative excess returns for developed ex-US portfolios only.
+    
+    Parameters:
+    - dd: dates (list/Series/array)
+    - re_developed: pd.DataFrame of excess returns (rows=time, columns=portfolios)
+    - labels_developed: list of portfolio names
+    - title: optional custom title
+    """
+    # Ensure datetime index
+    if not isinstance(re_developed.index, pd.DatetimeIndex):
+        re_developed.index = pd.to_datetime(dd)
+
+    re_developed = re_developed.sort_index()
+
+    # Cumulative excess returns
+    cum_dev = (1 + re_developed).cumprod() - 1
+    cum_dev_pct = cum_dev * 100  # to percent
+
+    plt.figure(figsize=(12, 7))
+
+    # Plot each developed portfolio
+    for i, col in enumerate(re_developed.columns):
+        label = labels_developed[i] if i < len(labels_developed) else col
+        plt.plot(cum_dev_pct.index, cum_dev_pct[col],
+                 label=label, linewidth=1.0, alpha=0.7)
+
+    plt.title(title)
+    plt.ylabel('Cumulative Excess Return (%)')
+    plt.xlabel('Date')
+    plt.grid(True, alpha=0.3, linestyle='--')
+
+    # Legend outside
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left',
+               fontsize=9, ncol=2, frameon=True, edgecolor='gray')
+
+    plt.tight_layout()
+    plt.show()

@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 import os
 from load_managed_portfolios import load_managed_portfolios
-from SCS_L2est import SCS_L2est
+from SCS_L2est import SCS_L2est, extra_plot, plot_50anom, plot_emg, plot_dev
 import load_emerging
 
 # Options
@@ -68,7 +68,7 @@ else:
 if withhold_test_sample:
     p['oos_test_date'] = oos_test_date
 
-# Process original ff25 portfolios if requested
+
 if dataprovider == 'ff25':
     print("=== ENTERED FF25 BLOCK ===")   # ← add this
     from load_ff25 import load_ff25
@@ -101,6 +101,7 @@ if dataprovider == 'ff25':
         # Assuming functions have been translated
         # dd, re, mkt, DATA, labels = load_ff25(datapath, daily, 0, tN)
         # Followed by processing and estimation logic as in MATLAB
+    extra_plot(dd, re, mkt, labels, daily=daily)
 
 elif dataprovider == 'emerging_mkt':
     print("=== ENTERED EMERGING MARKETS BLOCK ===")
@@ -123,9 +124,10 @@ elif dataprovider == 'emerging_mkt':
     #assuming monthly data, would need to enter different data for daily observations 
     freq = 12
     
-    print(f"Passing to SCS_L2est: {len(anomalies)} portfolios, {len(dd)} dates")
+    # print(f"Passing to SCS_L2est: {len(anomalies)} portfolios, {len(dd)} dates")
     p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
-    print("Estimation finished.")
+    # print("Estimation finished.")
+    plot_emg(dd,re,labels,title="Cumulative Excess Returns, Emerging Markets Portfolios")
 
 elif dataprovider == 'developed_mkt_exus':
     print("=== ENTERED DEVELOPED MKTS EX US BLOCK ===")
@@ -148,9 +150,11 @@ elif dataprovider == 'developed_mkt_exus':
     #assuming monthly data, would need to enter different data for daily observations 
     freq = 12
     
-    print(f"Passing to SCS_L2est: {len(anomalies)} portfolios, {len(dd)} dates")
+    # print(f"Passing to SCS_L2est: {len(anomalies)} portfolios, {len(dd)} dates")
     p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
-    print("Estimation finished.")
+    # print("Estimation finished.")
+
+    plot_dev(dd,re,labels,title="Cumulative Excess Returns - Developed ex-US Portfolios")
 
 else:
     # Managed portfolios
@@ -173,4 +177,6 @@ else:
         
         # estimate
         p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
+
+    plot_50anom(dd,re,anomalies)
 
