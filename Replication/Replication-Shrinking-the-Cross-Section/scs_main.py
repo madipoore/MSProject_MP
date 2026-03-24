@@ -3,8 +3,9 @@ import pandas as pd
 from datetime import datetime
 import os
 from load_managed_portfolios import load_managed_portfolios
-from SCS_L2est import SCS_L2est, extra_plot, plot_50anom, plot_emg, plot_dev
+from SCS_L2est import SCS_L2est, extra_plot, plot_50anom, plot_emg, plot_dev,plot_qqq
 import load_emerging
+import load_qqq
 
 # Options
 
@@ -13,9 +14,10 @@ interactions = False
 rotate_PC = False
 withhold_test_sample = False
 #dataprovider = 'ff25'
-dataprovider = 'anom_50'
+#dataprovider = 'anom_50'
 #dataprovider = 'emerging_mkt'
 #dataprovider = 'developed_mkt_exus'
+dataprovider = 'qqq'
 
 #use these dates for ff25 and anom50
 #emerging and developed markets set dates in their specific blocks
@@ -156,6 +158,33 @@ elif dataprovider == 'developed_mkt_exus':
 
     plot_dev(dd,re,labels,title="Cumulative Excess Returns - Developed ex-US Portfolios")
 
+elif dataprovider == 'qqq':
+    print("=== ENTERED QQQ BLOCK ===")
+
+    datapath = os.path.join(projpath, 'Data') + '/'
+    print(f"Loading from: {datapath}")
+    
+    # emerging_t0 = datetime(1990, 1, 1)
+    # emerging_tN = datetime(2025, 12, 31)
+    
+    dd, re, mkt, DATA, labels = load_qqq.load_qqq2(
+        datapath=datapath,
+        daily=daily,
+        t0=t0,
+        tN=tN
+    )
+    
+    anomalies = labels
+    
+    #assuming monthly data, would need to enter different data for daily observations 
+    freq = 12
+    
+    # print(f"Passing to SCS_L2est: {len(anomalies)} portfolios, {len(dd)} dates")
+    p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
+    # print("Estimation finished.")
+
+    plot_qqq(dd,re,labels,title="100 QQQ Portfolios")
+
 else:
     # Managed portfolios
     fmask = os.path.join(instrpath, f"managed_portfolios_{dataprovider}{suffix}_*.csv")
@@ -179,4 +208,3 @@ else:
         p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
 
     plot_50anom(dd,re,anomalies)
-

@@ -683,3 +683,34 @@ def plot_dev(dd, re_developed, labels_developed, title="Cumulative Excess Return
 
     plt.tight_layout()
     plt.show()
+
+def plot_qqq(dd, re_developed, labels_developed, title="100 QQQ Portfolios"):
+
+    if not isinstance(re_developed.index, pd.DatetimeIndex):
+        re_developed.index = pd.to_datetime(dd)
+
+    re_developed = re_developed.sort_index()
+
+    # Cumulative excess returns
+    cum_dev = (1 + re_developed).cumprod() - 1
+    cum_dev_pct = cum_dev * 100  # to percent
+
+    plt.figure(figsize=(12, 7))
+
+    # Plot each developed portfolio
+    for i, col in enumerate(re_developed.columns):
+        label = labels_developed[i] if i < len(labels_developed) else col
+        plt.plot(cum_dev_pct.index, cum_dev_pct[col],
+                 label=label, linewidth=1.0, alpha=0.7)
+
+    plt.title(title)
+    plt.ylabel('Cumulative Excess Return (%)')
+    plt.xlabel('Date')
+    plt.grid(True, alpha=0.3, linestyle='--')
+
+    # Legend outside
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left',
+               fontsize=9, ncol=2, frameon=True, edgecolor='gray')
+
+    plt.tight_layout()
+    plt.show()
