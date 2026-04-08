@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from utils import demarket, regcov, l2est
 from cross_validate import cross_validate
 
+qqq_switch=False
+
 def SCS_L2est(dates, re, market, freq, anomalies, parameters):
     """
     Computes the L2 shrinkage estimator of the SDF parameters
@@ -309,7 +311,13 @@ def SCS_L2est(dates, re, market, freq, anomalies, parameters):
 
     # L2 Cross-Validation/BIC plot
     if parameters['plot_objective']:
-        plot_L2cv(x, objL2, parameters)
+        if qqq_switch==False:
+            plot_L2cv(x, objL2, parameters)
+        elif qqq_switch==True:
+            print("plotting kappa optimization in different loop!!")
+            plot_L2cv2(x,objL2, parameters)
+
+
 
     # output table with coefficient & tstats estimates
     table_L2coefs(phi[:, iL2opt], se[:, iL2opt], anomalies, parameters)
@@ -642,8 +650,6 @@ def plot_emg(dd, re_emerging, labels_emerging, title="Cumulative Excess Returns 
     plt.tight_layout()
     plt.show()
 
-
-
 def plot_dev(dd, re_developed, labels_developed, title="Cumulative Excess Returns – Developed ex-US Portfolios"):
     """
     Simple line plot: cumulative excess returns for developed ex-US portfolios only.
@@ -714,3 +720,55 @@ def plot_qqq(dd, re_developed, labels_developed, title="100 QQQ Portfolios"):
 
     plt.tight_layout()
     plt.show()
+
+def plot_L2cv2(x, objL2, p):
+    """
+    Plot SSE/objective & BIC as a function of degrees of freedom.
+    
+    Parameters:
+    - x: Data for the x-axis.
+    - objL2: Data for plotting objectives and possible other values.
+    - p: Dictionary containing various plot parameters.
+    """
+    
+    # Open a new figure
+    plt.figure()
+    
+    # Plot In-sample (IS) and Out-of-Sample (OOS)
+    plt.plot(x, objL2[:, 0], '--', linewidth=p['line_width'])  # IS
+    plt.plot(x, objL2[:, 1], '-', linewidth=p['line_width'])  # OOS
+    
+    # Log-scale adjustment
+    if p['L2_log_scale']:
+        plt.xscale('log')
+        plt.xticks([tick + 1e-16 for tick in plt.xticks()[0]])
+    
+    # Labels
+    plt.xlabel(p['xlbl'], fontsize=12, labelpad=10, fontweight='bold')
+    plt.ylabel(f"IS/OOS {p['sObjective']}", fontsize=12, labelpad=10, fontweight='bold')
+    
+    # Legends and plot +1, -1 standard error
+    co = plt.gca().lines[-1].get_color()  # Getting color of last line plotted (OOS line)
+    plt.plot(x, objL2[:, 1] + objL2[:, 3], ':', color=co, linewidth=1)  # +1 SE
+    plt.plot(x, objL2[:, 1] - objL2[:, 3], ':', color=co, linewidth=1)  # -1 SE
+    
+    plt.legend(['In-sample', f"OOS {p['method']}", f"OOS {p['method']} +/- 1 s.e."],
+               loc='upper right')
+    
+    # Grid, axis limits
+    plt.grid(True)
+    #plt.ylim([0, max(0.1, min(10, 2*max(objL2[:, 1])))])
+    plt.ylim([-1,1])
+    #plt.xlim([min(x), 2])
+    plt.xlim([min(x),10**(1.5)])
+
+    plt.tight_layout()
+    # plt.ylim(0,1)
+    # plt.xlim(0.01,10)
+    
+    # Show plot
+    if p['show_plot']:
+        plt.show()
+
+    if p['results_export']:
+        plt.savefig('results_export/cross_validation.png', dpi=300, bbox_inches='tight')

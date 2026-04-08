@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 
-INPUT_LONG = "/Users/madisonpoore/Desktop/MSProject/Replication/Replication-Shrinking-the-Cross-Section/qqq_longpanel.csv"
-OUTPUT_WIDE = "qqq_100_portfolios_quintiles.csv"
+INPUT_LONG = "/Users/madisonpoore/Desktop/MSProject/Replication/Replication-Shrinking-the-Cross-Section/qqq_longpanel2.csv"
+OUTPUT_WIDE = "qqq_new_portfolios.csv"
 
 print("Loading long panel...")
 df = pd.read_csv(INPUT_LONG)

@@ -6,6 +6,7 @@ from load_managed_portfolios import load_managed_portfolios
 from SCS_L2est import SCS_L2est, extra_plot, plot_50anom, plot_emg, plot_dev,plot_qqq
 import load_emerging
 import load_qqq
+import seaborn as sns 
 
 # Options
 
@@ -16,8 +17,8 @@ withhold_test_sample = False
 #dataprovider = 'ff25'
 #dataprovider = 'anom_50'
 #dataprovider = 'emerging_mkt'
-#dataprovider = 'developed_mkt_exus'
-dataprovider = 'qqq'
+dataprovider = 'developed_mkt_exus'
+#dataprovider = 'qqq'
 
 #use these dates for ff25 and anom50
 #emerging and developed markets set dates in their specific blocks
@@ -164,8 +165,6 @@ elif dataprovider == 'qqq':
     datapath = os.path.join(projpath, 'Data') + '/'
     print(f"Loading from: {datapath}")
     
-    # emerging_t0 = datetime(1990, 1, 1)
-    # emerging_tN = datetime(2025, 12, 31)
     
     dd, re, mkt, DATA, labels = load_qqq.load_qqq2(
         datapath=datapath,
@@ -183,6 +182,21 @@ elif dataprovider == 'qqq':
     p = SCS_L2est(dd, re, mkt, freq, anomalies, p)
     # print("Estimation finished.")
 
+    estimates = p
+
+    bL2 = estimates['bL2']
+    labels = anomalies
+
+    # Create a nice table
+    import pandas as pd
+    coef_table = pd.DataFrame({
+        'Portfolio': labels,
+        'Shrunk_Weight': bL2,
+        'Abs_Weight': np.abs(bL2)
+    }).sort_values(by='Abs_Weight', ascending=False)
+
+    print("\nTop characteristics after KNS shrinkage:")
+    print(coef_table.head(15))
     plot_qqq(dd,re,labels,title="100 QQQ Portfolios")
 
 else:

@@ -4,8 +4,8 @@ import pandas as pd
 # ==============================================
 # CONFIG
 # ==============================================
-INPUT_FILE = "/Users/madisonpoore/Desktop/MSProject/Replication/Replication-Shrinking-the-Cross-Section/Data/qqq_monthly_2007_2015.csv"
-OUTPUT_FILE = "qqq_longpanel.csv"
+INPUT_FILE = "/Users/madisonpoore/Desktop/MSProject/Replication/Replication-Shrinking-the-Cross-Section/Data/qqq_monthly_1997_2017.csv"
+OUTPUT_FILE = "qqq_longpanel_new.csv"
 
 # ==============================================
 # 1. Load and prepare raw data
