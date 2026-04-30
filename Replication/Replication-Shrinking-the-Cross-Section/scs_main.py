@@ -15,9 +15,9 @@ interactions = False
 rotate_PC = False
 withhold_test_sample = False
 #dataprovider = 'ff25'
-#dataprovider = 'anom_50'
+dataprovider = 'anom_50'
 #dataprovider = 'emerging_mkt'
-dataprovider = 'developed_mkt_exus'
+#dataprovider = 'developed_mkt_exus'
 #dataprovider = 'qqq'
 
 #use these dates for ff25 and anom50
